@@ -1,13 +1,14 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { View, Text, StyleSheet, StatusBar, ScrollView } from "react-native";
-import { BaseButton, TextInput } from "react-native-gesture-handler";
+import { BaseButton } from "react-native-gesture-handler";
 import { FontAwesome } from "@expo/vector-icons";
 import Toast from "react-native-root-toast";
 import { toastConfig } from "../../../../common/util";
+import EntityCard from "../../../../components/entityCard";
 import * as SecureStore from 'expo-secure-store';
 
-export default function SendInvite() {
+export default function Settings() {
     const [project, setProject] = React.useState<any | null>(null);
 
     const params = useLocalSearchParams();
@@ -17,7 +18,7 @@ export default function SendInvite() {
         SecureStore.getItemAsync('token').then((token) => {
             if (!token)
                 router.replace('/login');
-            
+
             fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
                 method: 'GET',
                 headers: {
@@ -53,7 +54,9 @@ export default function SendInvite() {
                         alignItems: "center",
                         justifyContent: "center",
                     }}
-                    onPress={router.back}>
+                    onPress={() => {
+                        router.back();
+                    }}>
                         <FontAwesome name="angle-left" size={30} color="#494949" />
                     </BaseButton>
                 </View>
@@ -64,34 +67,33 @@ export default function SendInvite() {
                         fontSize: 24,
                         fontWeight: "bold",
                     }}>
-                        {project?.name} / Invite
+                        {project?.name} / Settings
                     </Text>
                 </View>
             </View>          
 
             <View style={{
+                marginTop: 40,
                 display: "flex",
                 flexDirection: "column",
                 rowGap: 10,
             }}>
-                <Text style={{fontSize: 20, fontWeight: "600"}}>Invite by Email</Text>
-                <Text style={{fontSize: 14, fontWeight: "600"}}>Enter the email address of the user you want to invite to this project.</Text>
-                <TextInput style={{
-                    padding: 10,
-                    backgroundColor: "#e8e8e8",
-                    borderRadius: 10,
-                }} placeholder="Email Address" />
+                <ScrollView>
+                    <View style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        rowGap: 10,
+                    }}>
+                        <Text style={{fontSize: 25, fontWeight: "600"}}>Project Name</Text>
+                        <Text style={{fontSize: 18}}>{project?.name}</Text>
 
-                <BaseButton style={{
-                    padding: 10,
-                    backgroundColor: "#e8e8e8",
-                    borderRadius: 10,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                }}>
-                    <Text style={{fontSize: 16, fontWeight: "600"}}>Send Invite</Text>
-                </BaseButton>
+                        <Text style={{fontSize: 25, fontWeight: "600"}}>Project Description</Text>
+                        <Text style={{fontSize: 18}}>{project?.description}</Text>
+
+                        <Text style={{fontSize: 25, fontWeight: "600"}}>Project Storage Schema</Text>
+                        <Text style={{fontSize: 18}}>{JSON.stringify(project?.storageSchema, null, 4)}</Text>
+                    </View>
+                </ScrollView>
             </View>
         </View>
     )

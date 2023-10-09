@@ -76,9 +76,7 @@ export default function CameraPage() {
               alignItems: "center",
               justifyContent: "center",
             }}
-            onPress={() => {
-              router.back();
-            }}>
+            onPress={router.back}>
               <FontAwesome name="angle-left" size={30} color="#494949" />
             </BaseButton>
           </View>
@@ -89,7 +87,7 @@ export default function CameraPage() {
               fontSize: 24,
               fontWeight: "bold",
             }}>
-              {params.type === "scan" ? "Scan" : "Register"} Entity
+              Scan Entity
             </Text>
           </View>
         </View>
@@ -156,7 +154,7 @@ export default function CameraPage() {
                         padding: 5,
                       }}
                     >
-                      {cameraType === 'front' ? '🤳' : '📷'}
+                      📷
                     </Text>
                   </BaseButton>
                 </View>
@@ -265,7 +263,6 @@ const CameraPreview = ({photo, retakePicture, savePhoto}) => {
               style={{
                 width: 130,
                 height: 40,
-
                 alignItems: 'center',
                 borderRadius: 4
               }}
@@ -276,7 +273,7 @@ const CameraPreview = ({photo, retakePicture, savePhoto}) => {
                   fontSize: 20
                 }}
               >
-                Process Image
+                Scan
               </Text>
             </BaseButton>
           </View>

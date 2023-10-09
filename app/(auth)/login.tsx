@@ -32,7 +32,7 @@ export default function CameraPage() {
       if (response.status === 200) {
         response.json().then((json) => {
           console.log(json)
-          SecureStore.setItemAsync('loginStatus', JSON.stringify(json)).then(() => {
+          SecureStore.setItemAsync('token', json.token).then(() => {
             Toast.show("Login successful!", toastConfig);
             router.replace('/');
           });

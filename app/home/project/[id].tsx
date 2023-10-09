@@ -6,6 +6,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import ActivityCard from "../../../components/activityCard";
 import { toastConfig } from "../../../common/util";
 import Toast from "react-native-root-toast";
+import * as SecureStore from 'expo-secure-store';
 
 export default function HomePage() {
     const [project, setProject] = React.useState<any | null>(null);
@@ -15,40 +16,57 @@ export default function HomePage() {
     const router = useRouter();
 
     useEffect(() => {
-        fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(async (response) => {
-            const json = await response.json();
-            if (response.status === 200) {
-                console.log(json)
-                setProject(json);
-            }
-        }).catch((error) => {
-            console.log(error.message);
-            Toast.show("Server Error: Please try again later!", toastConfig);
+        SecureStore.getItemAsync('token').then((token) => {
+            if (!token)
+                router.replace('/login');
+        
+            fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`
+                }
+            }).then(async (response) => {
+                const json = await response.json();
+                if (response.status === 200) {
+                    console.log(json)
+                    setProject(json);
+                }
+            }).catch((error) => {
+                console.log(error.message);
+                Toast.show("Server Error: Please try again later!", toastConfig);
+            });
         });
     }, []);
 
     useEffect(() => {
-        fetch(`http://192.168.18.55:8000/api/project/${params.id}/activity/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(async (response) => {
-            const json = await response.json();
-            if (response.status === 200) {
-                console.log(json)
-                setActivity(json.map((activity: any) => {
-                    return (<ActivityCard key={activity.id} activity={activity} />)
-                }));
-            }
-        }).catch((error) => {
-            console.log(error.message);
-            Toast.show("Server Error: Please try again later!", toastConfig);
+        SecureStore.getItemAsync('token').then((token) => {
+            if (!token)
+                router.replace('/login');
+
+            fetch(`http://192.168.18.55:8000/api/project/${params.id}/activity/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`
+                }
+            }).then(async (response) => {
+                const json = await response.json();
+                if (response.status === 200) {
+                    console.log(json)
+
+                    if (!json || json.length === 0) {
+                        return (<Text>No Activity Found</Text>);
+                    }
+
+                    setActivity(json.map((activity: any) => {
+                        return (<ActivityCard key={activity.id} activity={activity} />)
+                    }));
+                }
+            }).catch((error) => {
+                console.log(error.message);
+                Toast.show("Server Error: Please try again later!", toastConfig);
+            });
         });
     }, [project]);
 
@@ -104,7 +122,7 @@ export default function HomePage() {
                         flexGrow: 1,
                     }}
                     onPress={() => {
-                        router.push(`/camera/register`);
+                        router.push(`home/project/camera/register/${project?.id}`);
                     }}>
                         <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Enroll New Entity</Text>
                     </BaseButton>
@@ -124,7 +142,7 @@ export default function HomePage() {
                         backgroundColor: "#0097C7",
                     }}
                     onPress={() => {
-                        
+                        router.replace(`/home/project/settings/${project?.id}`)
                     }}>
                         <FontAwesome name="gear" size={20} color="white" />
                     </BaseButton>
@@ -180,7 +198,7 @@ export default function HomePage() {
                     backgroundColor: "#0097C7",
                 }}
                 onPress={() => {
-                    router.push('/camera/scan');
+                    router.push(`home/project/camera/scan/${project?.id}`);
                 }}>
                     <FontAwesome name="camera" size={25} color="#fff" />
                 </BaseButton>

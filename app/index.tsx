@@ -8,10 +8,10 @@ export default function Index() {
 
   useEffect(() => {
     (async () => {
-      const loginStatus = await SecureStore.getItemAsync('loginStatus');
+      const token = await SecureStore.getItemAsync('token');
       
       if (element == null) {
-        if (loginStatus) {
+        if (token) {
           setElement(<Redirect href='/home' />);
 
         } else {

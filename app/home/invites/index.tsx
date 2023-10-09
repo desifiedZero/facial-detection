@@ -5,10 +5,9 @@ import { TextInput, BaseButton, ScrollView } from "react-native-gesture-handler"
 import { FontAwesome } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import Toast from "react-native-root-toast";
-import { toastConfig } from "../../common/util";
-import * as SecureStore from 'expo-secure-store';
+import { toastConfig } from "../../../common/util";
 
-export default function CreateProject() {
+export default function Invites() {
     const router = useRouter();
 
     const [name, setName] = React.useState<string>('');
@@ -49,7 +48,7 @@ export default function CreateProject() {
                         fontSize: 24,
                         fontWeight: "bold",
                     }}>
-                        Create Project
+                        Received Invites
                     </Text>
                 </View>
             </View>
@@ -57,109 +56,7 @@ export default function CreateProject() {
             <ScrollView style={{
                 flexGrow: 1
             }}>
-                <View>
-                    <Text style={{marginBottom: 4}}>Project Name</Text>
-                    <TextInput placeholder="Name" style={{
-                        padding: 10,
-                        fontSize: 18,
-                        borderRadius: 10,
-                        borderColor: "#ddd",
-                        borderWidth: 1
-                    }}
-                    onChangeText={(text) => setName(text)}
-                    value={name}
-                    />
-                </View>
-                <View style={{
-                    marginTop: 20
-                }}>
-                    <Text style={{marginBottom: 4}}>Project Description</Text>
-                    <TextInput placeholder="Description" style={{
-                        padding: 10,
-                        fontSize: 18,
-                        borderRadius: 10,
-                        borderColor: "#ddd",
-                        borderWidth: 1
-                    }} 
-                    multiline
-                    value={description}
-                    onChangeText={(text) => setDescription(text)}
-                    />
-                </View>
-                <View style={{
-                    marginTop: 20,
-                    display: "flex",
-                    flexDirection: "column",
-                    rowGap: 10,
-                }}>
-                    <Text>Fields</Text>
-                    <View style={{
-                        marginTop: 10,
-                        display: "flex",
-                        flexDirection: "column",
-                        rowGap: 10,
-                    }}>
-                        {Array.from(fields).map(([fieldName, fieldType], idx) => {
-                            return (
-                                <View style={{
-                                    display: "flex",
-                                    flexDirection: "row",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    padding: 10,
-                                    paddingHorizontal: 20,
-                                    backgroundColor: "#eee",
-                                    borderRadius: 100,
-
-                                }} key={idx}>
-                                    <Text style={{
-                                        fontSize: 18,
-                                        fontWeight: "bold"
-                                    }}>{fieldName}</Text>
-                                    <Text style={{
-                                        fontSize: 18,
-                                    }}>{fieldType}</Text>
-                                    {/* Remove from map icon button */}
-                                    <BaseButton style={{
-                                        padding: 10,
-                                        borderRadius: 500,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center"
-                                    }}
-                                    onPress={() => {
-                                        fields.delete(fieldName);
-                                        setFields(new Map(fields));
-                                    }}
-                                    >
-                                        <FontAwesome name="trash" size={20} color="#BD0000" />
-                                    </BaseButton>
-                                </View>
-                            )
-                        })}
-                    </View>
-                    <BaseButton 
-                    onPress={() => {
-                        setFieldPopup(true);
-                    }}
-                    style={{
-                        padding: 10,
-                        borderRadius: 100,
-                        borderColor: "#ddd",
-                        borderWidth: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexDirection: "row",
-                        backgroundColor: "#0097C7",
-                    }}>
-                        <Text style={{
-                            fontSize: 18,
-                            fontWeight: "bold",
-                            color: "#fff"
-                        }}>Add Field</Text>
-                    </BaseButton>
-                </View>
+                <Text>You have no invites</Text>
             </ScrollView>
             
             <View style={{
@@ -194,7 +91,7 @@ export default function CreateProject() {
                     alignItems: "center",
                     justifyContent: "center",
                 }}
-                onPress={async () => {
+                onPress={() => {
                     if (name.length === 0) Toast.show("Project name cannot be empty!", toastConfig);
                     else if (description.length === 0) Toast.show("Project description cannot be empty!", toastConfig);
                     else if (fields.size === 0) Toast.show("Project must have at least one field!", toastConfig);
@@ -213,8 +110,7 @@ export default function CreateProject() {
                     fetch('http://192.168.18.55:8000/api/project/', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Token ${await SecureStore.getItemAsync('token')}`
+                            'Content-Type': 'application/json'
                         },
                         body: projectInfo
                     }).then(async (response) => {

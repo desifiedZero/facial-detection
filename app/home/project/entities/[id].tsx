@@ -3,10 +3,10 @@ import React, { useEffect } from "react";
 import { View, Text, StyleSheet, StatusBar, ScrollView } from "react-native";
 import { BaseButton } from "react-native-gesture-handler";
 import { FontAwesome } from "@expo/vector-icons";
-import ActivityCard from "../../../../components/activityCard";
 import Toast from "react-native-root-toast";
 import { toastConfig } from "../../../../common/util";
 import EntityCard from "../../../../components/entityCard";
+import * as SecureStore from 'expo-secure-store';
 
 export default function HomePage() {
     const [project, setProject] = React.useState<any | null>(null);
@@ -16,20 +16,26 @@ export default function HomePage() {
     const router = useRouter();
 
     useEffect(() => {
-        fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(async (response) => {
-            const json = await response.json();
-            if (response.status === 200) {
-                console.log(json)
-                setProject(json);
-            }
-        }).catch((error) => {
-            console.log(error.message);
-            Toast.show("Server Error: Please try again later!", toastConfig);
+        SecureStore.getItemAsync('token').then((token) => {
+            if (!token)
+                router.replace('/login');
+
+            fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`
+                }
+            }).then(async (response) => {
+                const json = await response.json();
+                if (response.status === 200) {
+                    console.log(json)
+                    setProject(json);
+                }
+            }).catch((error) => {
+                console.log(error.message);
+                Toast.show("Server Error: Please try again later!", toastConfig);
+            });
         });
     }, []);
 
