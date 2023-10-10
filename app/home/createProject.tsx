@@ -12,12 +12,12 @@ export default function CreateProject() {
     const router = useRouter();
 
     const [name, setName] = React.useState<string>('');
-    const [description, setDescription] = React.useState<string>('');
+    const [description, setDescription] = React.useState<string>();
     const [fields, setFields] = React.useState<Map<string, string>>(new Map<string, string>());
     const [fieldPopup, setFieldPopup] = React.useState<boolean>(false);
 
     const [fieldName, setFieldName] = React.useState<string>('');
-    const [fieldType, setFieldType] = React.useState<string>('');
+    const [fieldType, setFieldType] = React.useState<string>('text');
 
     return (
         <><View style={styles.container}>
@@ -349,7 +349,7 @@ export default function CreateProject() {
                         {
                             setFields(new Map(fields.set(fieldName, fieldType)));
                             setFieldName('');
-                            setFieldType('');
+                            setFieldType('text');
                             setFieldPopup(false);
                         }
                     }}>

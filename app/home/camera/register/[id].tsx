@@ -1,55 +1,188 @@
 import { StatusBar } from 'expo-status-bar'
 import React, { useEffect } from 'react'
-import { StyleSheet, Text, View, Pressable, Alert, ImageBackground } from 'react-native'
+import { StyleSheet, Text, View, Pressable, Alert, ImageBackground, ActivityIndicator } from 'react-native'
 import { Camera, CameraCapturedPicture, CameraType, FlashMode, PermissionStatus } from 'expo-camera'
-import { BaseButton } from 'react-native-gesture-handler';
+import { BaseButton, TextInput } from 'react-native-gesture-handler';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
+import * as SecureStore from 'expo-secure-store';
+import Toast from 'react-native-root-toast';
+import { toastConfig } from '../../../../common/util';
 
 let camera: Camera;
 
 export default function CameraPage() {
+  const [project, setProject] = React.useState<any | null>(null);
   const [previewVisible, setPreviewVisible] = React.useState<boolean>(false)
   const [capturedImage, setCapturedImage] = React.useState<CameraCapturedPicture | null>(null)
   const [cameraType, setCameraType] = React.useState<CameraType>(CameraType.back)
   const [flashMode, setFlashMode] = React.useState<FlashMode>(FlashMode.off)
+  const [showModal, setShowModal] = React.useState<boolean>(false);
+  const [fields, setFields] = React.useState<Map<string, string>>(new Map<string, string>());
+  const [sending, setSending] = React.useState<boolean>(false);
 
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  const takePicture = async () => {    
+  useEffect(() => {
+    SecureStore.getItemAsync('token').then((token) => {
+      if (!token)
+          router.replace('/login');
+
+      fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Token ${token}`
+          }
+      }).then(async (response) => {
+          const json = await response.json();
+          if (response.status === 200) {
+            console.log(json)
+            setProject(json)
+          }
+      }).catch((error) => {
+          console.log(error.message);
+          Alert.alert(error.message);
+      });
+    });
+  }, []);
+
+  const takePicture = async () => {  
+    console.log("Taking picture");
+    
     const photo: CameraCapturedPicture = await camera.takePictureAsync()
     setPreviewVisible(true)
     setCapturedImage(photo)
   }
 
-  const scanImage = () => {
-    let filename = capturedImage.uri.split('/').pop();
+  const modal = () => {
+    if (showModal && previewVisible && capturedImage) {
+      return (
+        <View style={{
+          position: "absolute",
+          bottom: 0,
+          width: "100%",
+          padding: 20,
+          backgroundColor: "#fff",
+        }}>
+          <View style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexGrow: 1,
+          }}>
+            {
+            project.storageSchema.map((field: {name: string, type: string}) => {
+              console.log("field", field);
+              return <View style={{
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                columnGap: 10,
+                marginBottom: 10,
+                justifyContent: "space-between",
+              }}>
+                <TextInput
+                style={{
+                  width: "100%",
+                  borderWidth: 1,
+                  borderRadius: 5,
+                  padding: 10,
+                }}
+                  placeholder={field.name}
+                  value={fields[field.name]}
+                  onChangeText={(text) => {
+                    setFields(fields.set(field.name, text));
+                    console.log(fields);
+                  }}
+                />
+              </View>
+            })
+            }
+          </View>
+          <View style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}>
+            <BaseButton onPress={() => {
+              setShowModal(false);
+            }}>
+              <Text style={{
+                fontSize: 20,
+                fontWeight: "bold",
+                padding: 10,
+              }}>Cancel</Text>
+            </BaseButton>
+            <BaseButton onPress={() => {
+              setShowModal(false);
+              scanImage();
+            }}>
+              <Text style={{
+                fontSize: 20,
+                fontWeight: "bold",
+                padding: 10,
+              }}>{ sending ? <ActivityIndicator /> : 'Register' }</Text>
+            </BaseButton>
+          </View>
+        </View>
+      )
+    }
+  }
 
-    let match = /\.(\w+)$/.exec(filename);
+  const scanImage = () => {
+    setSending(true);
+
+    let uri = capturedImage.uri;
+    let name = uri.split('/').pop();
+
+    let match = /\.(\w+)$/.exec(name);
     let type = match ? `image/${match[1]}` : `image`;
   
+    let fieldData = [];
+    fields.forEach((value, key) => {
+      fieldData.push({
+        kv_key: key,
+        kv_value: value,
+        kv_type: "string",
+      });
+    });
+
     let formData = new FormData();
-    formData.append('image', { uri: capturedImage.uri, name: filename, type });
+    formData.append('image', { uri, name, type });
     formData.append('project_id', params.id);
+    formData.append('fields', JSON.stringify(fieldData));
 
-    console.log(JSON.stringify(formData));
+    SecureStore.getItemAsync('token').then((token) => {
+      if (!token)
+        router.replace('/login');
 
-    fetch(`http://192.168.18.55:8000/api/project/${params.id}/scan/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      body: formData
-    }).then(async (response) => {
-      const json = await response.json();
-      if (response.status === 200) {
-        console.log(json)
-        router.replace(`/home/project/${params.id}/scan/${json.id}`);
-      }
-    }).catch((error) => {
-      console.log(error.message);
-      Alert.alert("Server Error: Please try again later!");
+      fetch(`http://192.168.18.55:8000/api/face/register/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Token ${token}`
+        },
+        body: formData
+      }).then(async (response) => {
+        if (response.status !== 201) {
+          throw new Error("There was an error registering the entity!");
+        }
+      }).catch((error) => {
+        Alert.alert("There was an error registering the entity!");
+      }).finally(() => {
+        setSending(false);
+        setPreviewVisible(false);
+        setCapturedImage(null);
+        setShowModal(false);
+
+        Toast.show("Entity Registered!", toastConfig);
+
+        router.back();
+      });
     });
   }
 
@@ -124,7 +257,7 @@ export default function CameraPage() {
           }}
         >
           {previewVisible && capturedImage ? (
-            <CameraPreview photo={capturedImage} savePhoto={scanImage} retakePicture={retakeImage} />
+            <CameraPreview photo={capturedImage} savePhoto={scanImage} retakePicture={retakeImage} setShowModal={setShowModal} sending={sending} />
           ) : (
             <Camera
               type={cameraType}
@@ -220,6 +353,7 @@ export default function CameraPage() {
         </View>
 
       <StatusBar translucent={false} />
+      {modal()}
     </View>
   )
 }
@@ -234,7 +368,7 @@ const styles = StyleSheet.create({
   }
 })
 
-const CameraPreview = ({photo, retakePicture, savePhoto}) => {
+const CameraPreview = ({photo, retakePicture, savePhoto, setShowModal, sending}) => {
   return (
     <View
       style={{
@@ -284,7 +418,7 @@ const CameraPreview = ({photo, retakePicture, savePhoto}) => {
               </Text>
             </BaseButton>
             <BaseButton
-              onPress={savePhoto}
+              onPress={() => setShowModal(true)}
               style={{
                 alignItems: 'center',
                 borderRadius: 4,
@@ -299,7 +433,7 @@ const CameraPreview = ({photo, retakePicture, savePhoto}) => {
                   fontSize: 20
                 }}
               >
-                Register
+                { sending ? <ActivityIndicator /> : 'Register' }
               </Text>
             </BaseButton>
           </View>

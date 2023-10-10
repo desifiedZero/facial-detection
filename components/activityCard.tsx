@@ -42,12 +42,12 @@ export default function ProjectLink({ activity }: ProjectLinkProps) {
                 }}>{activity.activity_data.name}  {statusLight(activity)}</Text>
 
                 { activity.activity_data.info && 
-                    Array.from(jsonToMap(activity.activity_data.info).entries()).map(([key, value]) => {
+                    Array.from(activity.activity_data.info.entry_details).map((item) => {
                         return <Text style={{
                             color: "#494949",
                             fontSize: 18,
                             fontWeight: "400"
-                        }}>{key}: {String(value)}</Text>
+                        }}>{item.kv_key}: {String(item.kv_value)}</Text>
                     })
                 }
                 { activity.activity_type === "scanned-entity" && activity.activity_data.success === false && 

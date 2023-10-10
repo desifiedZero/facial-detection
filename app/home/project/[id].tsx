@@ -53,8 +53,6 @@ export default function HomePage() {
             }).then(async (response) => {
                 const json = await response.json();
                 if (response.status === 200) {
-                    console.log(json)
-
                     if (!json || json.length === 0) {
                         return (<Text>No Activity Found</Text>);
                     }
@@ -63,8 +61,7 @@ export default function HomePage() {
                         return (<ActivityCard key={activity.id} activity={activity} />)
                     }));
                 }
-            }).catch((error) => {
-                console.log(error.message);
+            }).catch(() => {
                 Toast.show("Server Error: Please try again later!", toastConfig);
             });
         });
@@ -122,7 +119,7 @@ export default function HomePage() {
                         flexGrow: 1,
                     }}
                     onPress={() => {
-                        router.push(`home/project/camera/register/${project?.id}`);
+                        router.push(`home/camera/register/${project?.id}`);
                     }}>
                         <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Enroll New Entity</Text>
                     </BaseButton>
@@ -198,7 +195,7 @@ export default function HomePage() {
                     backgroundColor: "#0097C7",
                 }}
                 onPress={() => {
-                    router.push(`home/project/camera/scan/${project?.id}`);
+                    router.push(`home/camera/scan/${project?.id}`);
                 }}>
                     <FontAwesome name="camera" size={25} color="#fff" />
                 </BaseButton>
