@@ -11,11 +11,27 @@ import { toastConfig } from "../../common/util";
 export default function HomePage() {
     const router = useRouter();
     const [projects, setProjects] = React.useState<JSX.Element[]>([]);
+    const [user, setUser] = React.useState<User | null>(null);
 
     useEffect(() => {
         SecureStore.getItemAsync('token').then((token) => {
             if (!token)
                 router.replace('/login');
+
+            fetch('http://192.168.18.55:8000/api/me/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`
+                }
+            }).then(async (response) => {
+                const json = await response.json();
+                if (response.status === 200) {
+                    setUser(json);
+                }
+            }).catch((error) => {
+                console.log(error.message);
+            });
 
             fetch('http://192.168.18.55:8000/api/projects/', {
                 method: 'GET',
@@ -58,7 +74,10 @@ export default function HomePage() {
                     <Text style={{
                         fontSize: 40,
                     }}>
-                        Welcome Back!
+                        Welcome, {'\n'}<Text style={{
+                            fontWeight: "700", 
+                            color: "#0097C7"
+                        }}>{ !user ? 'User' : `${user.first_name} ${user.last_name}` }</Text>
                     </Text>
                 </View>
                 <View>
@@ -73,7 +92,9 @@ export default function HomePage() {
                         SecureStore.deleteItemAsync('token');
                         router.replace('/login');
                     }}>
-                        <FontAwesome name="sign-out" size={25} color="#BD0000" />
+                        <FontAwesome name="sign-out" size={25} color="#BD0000" style={{
+                            aspectRatio: 1,
+                        }} />
                     </BaseButton>
                 </View>
             </View>
@@ -96,8 +117,9 @@ export default function HomePage() {
                         columnGap: 8,
                     }}>
                         <BaseButton style={{
-                            borderRadius: 10,
-                            padding: 13,
+                            borderRadius: 500,
+                            paddingVertical: 17,
+                            paddingHorizontal: 20,
                             backgroundColor: "#0097C7",
                         }}
                         onPress={() => {
@@ -108,12 +130,13 @@ export default function HomePage() {
                                 fontSize: 18,
                                 fontWeight: "800"
                             }}>
-                                <FontAwesome name="user-plus" size={18} color="#fff" />
+                                <FontAwesome name="user-plus" size={20} color="#fff" />
                             </Text>
                         </BaseButton>
                         <BaseButton style={{
-                            borderRadius: 10,
-                            padding: 13,
+                            borderRadius: 500,
+                            paddingVertical: 17,
+                            paddingHorizontal: 20,
                             backgroundColor: "#0097C7",
                         }}
                         onPress={() => {
@@ -124,7 +147,7 @@ export default function HomePage() {
                                 fontSize: 18,
                                 fontWeight: "800"
                             }}>
-                                <FontAwesome name="plus" size={18} color="#fff" />
+                                <FontAwesome name="plus" size={20} color="#fff" />
                             </Text>
                         </BaseButton>
                     </View>
@@ -150,3 +173,14 @@ const styles = StyleSheet.create({
       marginTop: StatusBar.currentHeight,
     },
 });
+
+// interface from 
+// {"url":"http://192.168.18.55:8000/api/users/6/","username":"newuser","first_name":"New","last_name":"User","email":"newuser@example.com","groups":[]}
+interface User {
+    url: string,
+    username: string,
+    first_name: string,
+    last_name: string,
+    email: string,
+    groups: any[],
+}

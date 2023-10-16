@@ -113,18 +113,18 @@ export default function HomePage() {
                     columnGap: 8,
                 }}>
                     <BaseButton style={{
-                        borderRadius: 10,
+                        borderRadius: 500,
                         padding: 13,
                         backgroundColor: "#0097C7",
                         flexGrow: 1,
                     }}
                     onPress={() => {
-                        router.push(`home/camera/register/${project?.id}`);
+                        router.push(`/home/project/entities/${project?.id}`);
                     }}>
-                        <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Enroll New Entity</Text>
+                        <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Registered Entities</Text>
                     </BaseButton>
                     <BaseButton style={{
-                        borderRadius: 10,
+                        borderRadius: 500,
                         padding: 13,
                         backgroundColor: "#0097C7",
                     }}
@@ -134,8 +134,9 @@ export default function HomePage() {
                         <FontAwesome name="user-plus" size={20} color="white" />
                     </BaseButton>
                     <BaseButton style={{
-                        borderRadius: 10,
+                        borderRadius: 500,
                         padding: 13,
+                        paddingHorizontal: 15,
                         backgroundColor: "#0097C7",
                     }}
                     onPress={() => {
@@ -150,27 +151,38 @@ export default function HomePage() {
                     columnGap: 8,
                 }}>
                     <BaseButton style={{
-                        borderRadius: 10,
+                        borderRadius: 500,
                         padding: 13,
                         backgroundColor: "#0097C7",
                         flexGrow: 1,
                     }}
                     onPress={() => {
-                        router.push(`/home/project/entities/${project?.id}`);
+                        router.push(`home/camera/register/${project?.id}`);
                     }}>
-                        <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Registered Entities</Text>
+                        <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Enroll New Entity</Text>
+                    </BaseButton>
+                    <BaseButton style={{
+                        borderRadius: 500,
+                        padding: 13,
+                        backgroundColor: "#0097C7",
+                        flexGrow: 1,
+                    }}
+                    onPress={() => {
+                        router.push(`home/camera/scan/${project?.id}`);
+                    }}>
+                        <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Scan Entity</Text>
                     </BaseButton>
                 </View>
             </View>           
 
-            <View style={{
+            <ScrollView style={{
                 marginTop: 40,
                 display: "flex",
                 flexDirection: "column",
                 rowGap: 10,
             }}>
-                <Text style={{fontSize: 30, fontWeight: "600"}}>Activity</Text>
-                <ScrollView>
+                <Text style={{fontSize: 30, fontWeight: "600", marginBottom: 10}}>Activity</Text>
+                <View>
                     <View style={{
                         display: "flex",
                         flexDirection: "column",
@@ -178,13 +190,14 @@ export default function HomePage() {
                     }}>
                         {activity}
                     </View>
-                </ScrollView>
-            </View>
+                </View>
+            </ScrollView>
 
-            <View style={{
+            {/* <View style={{
                 position: 'absolute',
                 bottom: 0,
                 right: 0,
+                padding: 20,
             }}>
                 <BaseButton style={{
                     borderRadius: 500,
@@ -199,7 +212,7 @@ export default function HomePage() {
                 }}>
                     <FontAwesome name="camera" size={25} color="#fff" />
                 </BaseButton>
-            </View>
+            </View> */}
         </View>
     )
 };

@@ -6,129 +6,58 @@ import { BaseButton, TextInput } from 'react-native-gesture-handler';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
+import * as FaceDetector from 'expo-face-detector';
 import Toast from 'react-native-root-toast';
 import { toastConfig } from '../../../../common/util';
+import { ImageResult, SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 
 let camera: Camera;
 
 export default function CameraPage() {
-  const [project, setProject] = React.useState<any | null>(null);
   const [previewVisible, setPreviewVisible] = React.useState<boolean>(false)
-  const [capturedImage, setCapturedImage] = React.useState<CameraCapturedPicture | null>(null)
+  const [capturedImage, setCapturedImage] = React.useState<ImageResult | null>(null)
   const [cameraType, setCameraType] = React.useState<CameraType>(CameraType.back)
   const [flashMode, setFlashMode] = React.useState<FlashMode>(FlashMode.off)
-  const [showModal, setShowModal] = React.useState<boolean>(false);
-  const [fields, setFields] = React.useState<Map<string, string>>(new Map<string, string>());
   const [sending, setSending] = React.useState<boolean>(false);
 
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  useEffect(() => {
-    SecureStore.getItemAsync('token').then((token) => {
-      if (!token)
-          router.replace('/login');
-
-      fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Token ${token}`
-          }
-      }).then(async (response) => {
-          const json = await response.json();
-          if (response.status === 200) {
-            console.log(json)
-            setProject(json)
-          }
-      }).catch((error) => {
-          console.log(error.message);
-          Alert.alert("Server Error: Please try again later!");
-      });
-    });
-  }, []);
-
   const takePicture = async () => {  
     console.log("Taking picture");
     
-    const photo: CameraCapturedPicture = await camera.takePictureAsync()
-    setPreviewVisible(true)
-    setCapturedImage(photo)
-  }
+    const photo: CameraCapturedPicture = await camera.takePictureAsync();
 
-  const modal = () => {
-    if (showModal && previewVisible && capturedImage) {
-      return (
-        <View style={{
-          position: "absolute",
-          bottom: 0,
-          width: "100%",
-          padding: 20,
-          backgroundColor: "#fff",
-        }}>
-          <View style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexGrow: 1,
-          }}>
-            {
-            project.storageSchema.map((field: {name: string, type: string}) => {
-              console.log("field", field);
-              return <View style={{
-                flexGrow: 1,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                columnGap: 10,
-                marginBottom: 10,
-                justifyContent: "space-between",
-              }}>
-                <TextInput
-                style={{
-                  width: "100%",
-                  borderWidth: 1,
-                  borderRadius: 5,
-                  padding: 10,
-                }}
-                  placeholder={field.name}
-                  value={fields[field.name]}
-                  onChangeText={(text) => {
-                    setFields(fields.set(field.name, text));
-                    console.log(fields);
-                  }}
-                />
-              </View>
-            })
+    const faces = await FaceDetector.detectFacesAsync(photo.uri);
+    
+    try {
+      if (faces.faces.length > 0) {
+        // crop image with face
+        manipulateAsync(photo.uri, 
+          [
+            { 
+              crop: 
+              { 
+                originX: faces.faces[0].bounds.origin.x, 
+                originY: faces.faces[0].bounds.origin.y, 
+                width: faces.faces[0].bounds.size.width, 
+                height: faces.faces[0].bounds.size.height 
+              } 
             }
-          </View>
-          <View style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}>
-            <BaseButton onPress={() => {
-              setShowModal(false);
-            }}>
-              <Text style={{
-                fontSize: 20,
-                fontWeight: "bold",
-                padding: 10,
-              }}>Cancel</Text>
-            </BaseButton>
-            <BaseButton onPress={() => {
-              scanImage();
-            }}>
-              <Text style={{
-                fontSize: 20,
-                fontWeight: "bold",
-                padding: 10,
-              }}>{sending ? <ActivityIndicator /> : 'Scan'}</Text>
-            </BaseButton>
-          </View>
-        </View>
-      )
+          ], 
+          { compress: 0.8, format: SaveFormat.JPEG })
+        .then((result) => {
+          console.log("Face detected");
+          setPreviewVisible(true)
+          setCapturedImage(result);
+        });
+      } else {
+        console.log("No face detected");
+        Alert.alert("No face detected!");
+      }
+    } catch (error) {
+      console.log(error.message);
+      Alert.alert(error.message);
     }
   }
 
@@ -156,18 +85,28 @@ export default function CameraPage() {
           'Authorization': `Token ${token}`
         },
         body: formData
-      }).then(async (response) => {
-        const json = await response.json();
+      }).then((response) => {
         if (response.status !== 200) {
-          Alert.alert("Server Error: Please try again later!");
+          Alert.alert("Person not found!");
+          return;
         }
+
+        response.json().then((json) => {
+          let content: string = '';
+
+          if (json.entry_details?.length > 0) {
+            json.entry_details.forEach((entry: any) => {
+              content += `${entry.kv_key}: ${entry.kv_value}\n`;
+            });
+          }
+          Alert.alert("Person found!", content);
+        });
       }).catch((error) => {
-        Alert.alert("Server Error: Please try again later!");
+        Alert.alert("Person not found!");
       }).finally(() => {
         setSending(false);
         setPreviewVisible(false);
         setCapturedImage(null);
-        setShowModal(false);
 
         Toast.show("Entity Scanned!", toastConfig);
 
@@ -216,6 +155,12 @@ export default function CameraPage() {
           alignItems: "center",
           columnGap: 20,
           padding: 20,
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          zIndex: 1,
+          backgroundColor: "rgba(255,255,255, 0.7)",
         }}>
           <View>
             <BaseButton style={{
@@ -226,7 +171,7 @@ export default function CameraPage() {
               justifyContent: "center",
             }}
             onPress={router.back}>
-              <FontAwesome name="angle-left" size={30} color="#494949" />
+              <FontAwesome name="angle-left" size={30} color="#000" />
             </BaseButton>
           </View>
           <View style={{
@@ -235,6 +180,7 @@ export default function CameraPage() {
             <Text style={{
               fontSize: 24,
               fontWeight: "bold",
+              color: "#000",
             }}>
               Scan Entity
             </Text>
@@ -247,7 +193,7 @@ export default function CameraPage() {
           }}
         >
           {previewVisible && capturedImage ? (
-            <CameraPreview photo={capturedImage} savePhoto={scanImage} retakePicture={retakeImage} setShowModal={setShowModal} />
+            <CameraPreview photo={capturedImage} savePhoto={scanImage} retakePicture={retakeImage} sending={sending} />
           ) : (
             <Camera
               type={cameraType}
@@ -256,6 +202,7 @@ export default function CameraPage() {
               ref={(r) => {
                 camera = r
               }}
+              ratio={'16:9'}
             >
               <View
                 style={{
@@ -274,38 +221,7 @@ export default function CameraPage() {
                     justifyContent: 'space-between'
                   }}
                 >
-                  <BaseButton
-                    onPress={toggleFlash}
-                    style={{
-                      backgroundColor: flashMode === 'off' ? '#000' : '#fff',
-                      borderRadius: 50
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 20,
-                        padding: 5,
-                      }}
-                    >
-                      ⚡️
-                    </Text>
-                  </BaseButton>
-                  <BaseButton
-                    onPress={flipCamera}
-                    style={{
-                      marginTop: 20,
-                      borderRadius: 50
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 20,
-                        padding: 5,
-                      }}
-                    >
-                      📷
-                    </Text>
-                  </BaseButton>
+                  
                 </View>
                 <View
                   style={{
@@ -322,9 +238,50 @@ export default function CameraPage() {
                     style={{
                       alignSelf: 'center',
                       flex: 1,
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between'
                     }}
                   >
+                    <View style={{
+                      width: '15%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      rowGap: 5,
+                    }}>
+                      <BaseButton
+                        onPress={toggleFlash}
+                        style={{
+                          backgroundColor: flashMode === 'off' ? 'rgba(0, 0, 0, 0.2)' : '#fff',
+                          borderRadius: 150,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            padding: 15,
+                            textAlign: 'center'
+                          }}
+                        >
+                          <FontAwesome name="flash" size={25} color={flashMode === 'off' ? '#fff' : '#494949'} />
+                        </Text>
+                      </BaseButton>
+                      <BaseButton
+                        onPress={flipCamera}
+                        style={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                          borderRadius: 50,
+                        }}
+                      >
+                        <Text style={{
+                          padding: 15,
+                          textAlign: 'center'
+                        }}>
+                          <FontAwesome name="camera" size={25} color="#fff" />
+                        </Text>
+                      </BaseButton>
+                    </View>
+
                     <BaseButton
                       onPress={takePicture}
                       style={{
@@ -335,6 +292,10 @@ export default function CameraPage() {
                         backgroundColor: '#fff'
                       }}
                     />
+                    
+                    <View style={{
+                      width: '15%'
+                    }} />
                   </View>
                 </View>
               </View>
@@ -357,7 +318,7 @@ const styles = StyleSheet.create({
   }
 })
 
-const CameraPreview = ({photo, retakePicture, savePhoto, setShowModal}) => {
+const CameraPreview = ({photo, retakePicture, savePhoto, sending}) => {
   return (
     <View
       style={{
@@ -422,7 +383,7 @@ const CameraPreview = ({photo, retakePicture, savePhoto, setShowModal}) => {
                   fontSize: 20
                 }}
               >
-                Scan
+                { sending ? <ActivityIndicator size="small" color="#000" /> : "Scan" }
               </Text>
             </BaseButton>
           </View>
