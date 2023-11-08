@@ -6,9 +6,11 @@ import { FontAwesome } from "@expo/vector-icons";
 import Toast from "react-native-root-toast";
 import { toastConfig } from "../../../../common/util";
 import * as SecureStore from 'expo-secure-store';
+import env from '../../../../common/env';
 
 export default function SendInvite() {
     const [project, setProject] = React.useState<any | null>(null);
+    const [email, setEmail] = React.useState<string>("");
 
     const params = useLocalSearchParams();
     const router = useRouter();
@@ -18,7 +20,7 @@ export default function SendInvite() {
             if (!token)
                 router.replace('/login');
             
-            fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
+            fetch(`${env.API_URL}project/${params.id}/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -80,7 +82,7 @@ export default function SendInvite() {
                     padding: 10,
                     backgroundColor: "#e8e8e8",
                     borderRadius: 10,
-                }} placeholder="Email Address" />
+                }} placeholder="Email Address" value={email} onChangeText={setEmail}/>
 
                 <BaseButton style={{
                     padding: 10,
@@ -89,6 +91,34 @@ export default function SendInvite() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                }}
+                onPress={() => {
+                    SecureStore.getItemAsync('token').then((token) => {
+                        if (!token)
+                            router.replace('/login');
+                        
+                        fetch(`${env.API_URL}project/${params.id}/invite/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Token ${token}`
+                            },
+                            body: JSON.stringify({
+                                email: email,
+                            })
+                        }).then(async (response) => {
+                            const json = await response.json();
+                            if (response.status === 200) {
+                                console.log(json)
+                                Toast.show("Invite sent!", toastConfig);
+                                setEmail("");
+                                router.back();
+                            }
+                        }).catch((error) => {
+                            console.log(error.message);
+                            Toast.show("Server Error: Please try again later!", toastConfig);
+                        });
+                    })
                 }}>
                     <Text style={{fontSize: 16, fontWeight: "600"}}>Send Invite</Text>
                 </BaseButton>

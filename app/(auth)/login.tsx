@@ -7,6 +7,7 @@ import { Link, useRouter } from "expo-router";
 import Toast from "react-native-root-toast";
 import { toastConfig } from "../../common/util";
 import * as SecureStore from 'expo-secure-store';
+import env from "../../common/env";
 
 export default function CameraPage() {
   const [username, setUsername] = React.useState<string>('');
@@ -19,7 +20,7 @@ export default function CameraPage() {
     console.log('login user');
     setLogginIn(true);
 
-    fetch('http://192.168.18.55:8000/api/token/', {
+    fetch(`${env.API_URL}token/`, {
       body: JSON.stringify({
         username: username,
         password: password,
@@ -76,7 +77,7 @@ export default function CameraPage() {
               fontWeight: "800"
             }}>{loggingIn ? <ActivityIndicator /> : 'LOGIN'}</Text>
           </BaseButton>
-          <View>
+          {/* <View>
             <Link href='/forgotPassword' asChild>
               <BaseButton style={{
                 display: "flex",
@@ -93,7 +94,7 @@ export default function CameraPage() {
                 }}>Forgot password?</Text>
               </BaseButton>
             </Link>
-          </View>
+          </View> */}
         </View>
       </View>
       
@@ -125,7 +126,7 @@ export default function CameraPage() {
 const styles = StyleSheet.create({
   title: {
     color: "rgba(73, 73, 73, 0.40)",
-    fontSize: 70,
+    fontSize: 50,
     fontStyle: "normal",
     fontWeight: "700",
   },

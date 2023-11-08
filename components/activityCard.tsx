@@ -56,7 +56,7 @@ export default function ProjectLink({ activity }: ProjectLinkProps) {
                         fontSize: 18,
                         fontWeight: "400"
                     }}>Not Found</Text>
-                    }
+                }
             </View>
         </BaseButton>);
 }

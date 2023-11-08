@@ -6,6 +6,7 @@ import { BaseButton } from "react-native-gesture-handler";
 import { Link, useRouter } from "expo-router";
 import Toast from "react-native-root-toast";
 import { toastConfig } from "../../common/util";
+import env from "../../common/env";
 
 export default function CameraPage() {
   const [username, setUsername] = React.useState<string>('');
@@ -19,7 +20,7 @@ export default function CameraPage() {
   const registerUser = async () => {
     console.log('register user');
 
-    fetch('http://192.168.18.55:8000/api/register/', {
+    fetch(`${env.API_URL}register/`, {
       body: JSON.stringify({
         username: username,
         first_name: firstName,
@@ -57,7 +58,7 @@ export default function CameraPage() {
         flexGrow: 1,
         justifyContent: "center",
       }}>
-        <Text style={styles.title}>REGISTER</Text>
+        <Text style={styles.title} allowFontScaling={true}>REGISTER</Text>
         <View style={styles.inputs}>
           <InputField value={username} setValue={setUsername} placeHolder="username" iconName="user" iconSize={20} autoComplete="username" />
           <InputField value={firstName} setValue={setFirstName} placeHolder="first name" iconName="user" iconSize={20} autoComplete="name-given" />
@@ -110,9 +111,9 @@ export default function CameraPage() {
 const styles = StyleSheet.create({
   title: {
     color: "rgba(73, 73, 73, 0.40)",
-    fontSize: 70,
+    fontSize: 50,
     fontStyle: "normal",
-    fontWeight: "700",
+    fontWeight: "700"
   },
   content: {
     display: "flex",

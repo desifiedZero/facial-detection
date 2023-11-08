@@ -7,6 +7,7 @@ import ActivityCard from "../../../components/activityCard";
 import { toastConfig } from "../../../common/util";
 import Toast from "react-native-root-toast";
 import * as SecureStore from 'expo-secure-store';
+import env from '../../../common/env';
 
 export default function HomePage() {
     const [project, setProject] = React.useState<any | null>(null);
@@ -20,7 +21,7 @@ export default function HomePage() {
             if (!token)
                 router.replace('/login');
         
-            fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
+            fetch(`${env.API_URL}project/${params.id}/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -44,7 +45,7 @@ export default function HomePage() {
             if (!token)
                 router.replace('/login');
 
-            fetch(`http://192.168.18.55:8000/api/project/${params.id}/activity/`, {
+            fetch(`${env.API_URL}project/${params.id}/activity/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -123,21 +124,27 @@ export default function HomePage() {
                     }}>
                         <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Registered Entities</Text>
                     </BaseButton>
-                    <BaseButton style={{
-                        borderRadius: 500,
-                        padding: 13,
-                        backgroundColor: "#0097C7",
-                    }}
-                    onPress={() => {
-                        router.push(`/home/project/invite/${project?.id}`);
-                    }}>
-                        <FontAwesome name="user-plus" size={20} color="white" />
-                    </BaseButton>
+                    {
+                        project?.is_admin && (
+                            <BaseButton style={{
+                                borderRadius: 500,
+                                padding: 13,
+                                backgroundColor: "#0097C7",
+                            }}
+                            onPress={() => {
+                                router.push(`/home/project/invite/${project?.id}`);
+                            }}>
+                                <FontAwesome name="user-plus" size={20} color="white" />
+                            </BaseButton>
+                        )
+                    }
                     <BaseButton style={{
                         borderRadius: 500,
                         padding: 13,
                         paddingHorizontal: 15,
                         backgroundColor: "#0097C7",
+                        alignContent: "center",
+                        justifyContent: "center",
                     }}
                     onPress={() => {
                         router.replace(`/home/project/settings/${project?.id}`)

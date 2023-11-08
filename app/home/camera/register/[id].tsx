@@ -10,6 +10,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as FaceDetector from 'expo-face-detector';
 import Toast from 'react-native-root-toast';
 import { toastConfig } from '../../../../common/util';
+import env from '../../../../common/env';
 
 let camera: Camera;
 
@@ -33,7 +34,7 @@ export default function CameraPage() {
       if (!token)
           router.replace('/login');
 
-      fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
+      fetch(`${env.API_URL}project/${params.id}/`, {
           method: 'GET',
           headers: {
             'Authorization': `Token ${token}`
@@ -204,7 +205,7 @@ export default function CameraPage() {
       if (!token)
         router.replace('/login');
 
-      fetch(`http://192.168.18.55:8000/api/face/register/`, {
+      fetch(`${env.API_URL}face/register/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -476,17 +477,29 @@ const CameraPreview = ({photo, retakePicture, savePhoto, setShowModal, sending})
         height: '100%'
       }}
     >
-      <ImageBackground
-        source={{uri: photo && photo.uri}}
+      <View
         style={{
-          flex: 1
+          flex: 1,
+          display: 'flex',
         }}
-        width={photo && photo.width}
-        height={photo && photo.height}
       >
         <View
           style={{
-            flex: 1,
+            flexDirection: 'column',
+            flexGrow: 1,
+            paddingHorizontal: '20%',
+          }}
+        >
+          <ImageBackground
+            resizeMode='contain'
+            source={{uri: photo.uri}}
+            style={{
+              flex: 1,
+            }}
+          />
+        </View>
+        <View
+          style={{
             flexDirection: 'column',
             padding: 15,
             justifyContent: 'flex-end'
@@ -502,15 +515,16 @@ const CameraPreview = ({photo, retakePicture, savePhoto, setShowModal, sending})
               onPress={retakePicture}
               style={{
                 alignItems: 'center',
-                borderRadius: 4,
-                padding: 13,
+                borderRadius: 500,
+                paddingVertical: 13,
+                paddingHorizontal: 20,
                 justifyContent: 'center',
-                backgroundColor: '#FFF'
+                backgroundColor: '#111'
               }}
             >
               <Text
                 style={{
-                  color: '#000',
+                  color: '#FFF',
                   fontSize: 20
                 }}
               >
@@ -521,15 +535,16 @@ const CameraPreview = ({photo, retakePicture, savePhoto, setShowModal, sending})
               onPress={() => setShowModal(true)}
               style={{
                 alignItems: 'center',
-                borderRadius: 4,
-                padding: 13,
+                borderRadius: 500,
+                paddingVertical: 13,
+                paddingHorizontal: 20,
                 justifyContent: 'center',
-                backgroundColor: '#FFF'
+                backgroundColor: '#0097C7'
               }}
             >
               <Text
                 style={{
-                  color: '#000',
+                  color: '#FFF',
                   fontSize: 20
                 }}
               >
@@ -538,7 +553,7 @@ const CameraPreview = ({photo, retakePicture, savePhoto, setShowModal, sending})
             </BaseButton>
           </View>
         </View>
-      </ImageBackground>
+      </View>
     </View>
   )
 }

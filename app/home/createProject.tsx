@@ -7,6 +7,7 @@ import { Picker } from "@react-native-picker/picker";
 import Toast from "react-native-root-toast";
 import { toastConfig } from "../../common/util";
 import * as SecureStore from 'expo-secure-store';
+import env from "../../common/env";
 
 export default function CreateProject() {
     const router = useRouter();
@@ -210,7 +211,7 @@ export default function CreateProject() {
                         })
                     });
 
-                    fetch('http://192.168.18.55:8000/api/project/', {
+                    fetch(`${env.API_URL}project/`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

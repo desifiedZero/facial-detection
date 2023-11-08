@@ -10,6 +10,7 @@ import * as FaceDetector from 'expo-face-detector';
 import Toast from 'react-native-root-toast';
 import { toastConfig } from '../../../../common/util';
 import { ImageResult, SaveFormat, manipulateAsync } from 'expo-image-manipulator';
+import env from '../../../../common/env';
 
 let camera: Camera;
 
@@ -19,12 +20,14 @@ export default function CameraPage() {
   const [cameraType, setCameraType] = React.useState<CameraType>(CameraType.back)
   const [flashMode, setFlashMode] = React.useState<FlashMode>(FlashMode.off)
   const [sending, setSending] = React.useState<boolean>(false);
+  const [processingImage, setProcessingImage] = React.useState<boolean>(false);
 
   const router = useRouter();
   const params = useLocalSearchParams();
 
   const takePicture = async () => {  
     console.log("Taking picture");
+    setProcessingImage(true);
     
     const photo: CameraCapturedPicture = await camera.takePictureAsync();
 
@@ -50,10 +53,12 @@ export default function CameraPage() {
           console.log("Face detected");
           setPreviewVisible(true)
           setCapturedImage(result);
+          setProcessingImage(false);
         });
       } else {
         console.log("No face detected");
         Alert.alert("No face detected!");
+        setProcessingImage(false);
       }
     } catch (error) {
       console.log(error.message);
@@ -78,7 +83,7 @@ export default function CameraPage() {
       if (!token)
         router.replace('/login');
 
-      fetch(`http://192.168.18.55:8000/api/face/scan/`, {
+      fetch(`${env.API_URL}face/scan/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -87,6 +92,7 @@ export default function CameraPage() {
         body: formData
       }).then((response) => {
         if (response.status !== 200) {
+          console.log("ERROR", response.status, response.body)
           Alert.alert("Person not found!");
           return;
         }
@@ -102,6 +108,7 @@ export default function CameraPage() {
           Alert.alert("Person found!", content);
         });
       }).catch((error) => {
+        console.log("ERROR", error);
         Alert.alert("Person not found!");
       }).finally(() => {
         setSending(false);
@@ -118,6 +125,8 @@ export default function CameraPage() {
   const retakeImage = () => {
     setCapturedImage(null)
     setPreviewVisible(false)
+    setSending(false);
+    setProcessingImage(false);
   }
 
   const toggleFlash = () => {
@@ -283,15 +292,20 @@ export default function CameraPage() {
                     </View>
 
                     <BaseButton
-                      onPress={takePicture}
+                      onPress={processingImage ? () => {} : takePicture}
                       style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
                         width: 70,
                         height: 70,
                         bottom: 0,
                         borderRadius: 50,
                         backgroundColor: '#fff'
                       }}
-                    />
+                    >
+                      { processingImage ? <ActivityIndicator /> : null }
+                    </BaseButton>
                     
                     <View style={{
                       width: '15%'
@@ -328,15 +342,29 @@ const CameraPreview = ({photo, retakePicture, savePhoto, sending}) => {
         height: '100%'
       }}
     >
-      <ImageBackground
-        source={{uri: photo && photo.uri}}
+      <View
         style={{
-          flex: 1
+          flex: 1,
+          display: 'flex',
         }}
       >
         <View
           style={{
-            flex: 1,
+            flexDirection: 'column',
+            flexGrow: 1,
+            paddingHorizontal: '20%',
+          }}
+        >
+          <ImageBackground
+            resizeMode='contain'
+            source={{uri: photo.uri}}
+            style={{
+              flex: 1,
+            }}
+          />
+        </View>
+        <View
+          style={{
             flexDirection: 'column',
             padding: 15,
             justifyContent: 'flex-end'
@@ -352,15 +380,16 @@ const CameraPreview = ({photo, retakePicture, savePhoto, sending}) => {
               onPress={retakePicture}
               style={{
                 alignItems: 'center',
-                borderRadius: 4,
-                padding: 13,
+                borderRadius: 500,
+                paddingVertical: 13,
+                paddingHorizontal: 20,
                 justifyContent: 'center',
-                backgroundColor: '#FFF'
+                backgroundColor: '#111'
               }}
             >
               <Text
                 style={{
-                  color: '#000',
+                  color: '#FFF',
                   fontSize: 20
                 }}
               >
@@ -371,15 +400,16 @@ const CameraPreview = ({photo, retakePicture, savePhoto, sending}) => {
               onPress={() => savePhoto()}
               style={{
                 alignItems: 'center',
-                borderRadius: 4,
-                padding: 13,
+                borderRadius: 500,
+                paddingVertical: 13,
+                paddingHorizontal: 20,
                 justifyContent: 'center',
-                backgroundColor: '#FFF'
+                backgroundColor: '#0097C7'
               }}
             >
               <Text
                 style={{
-                  color: '#000',
+                  color: '#FFF',
                   fontSize: 20
                 }}
               >
@@ -388,7 +418,7 @@ const CameraPreview = ({photo, retakePicture, savePhoto, sending}) => {
             </BaseButton>
           </View>
         </View>
-      </ImageBackground>
+      </View>
     </View>
   )
 }

@@ -7,6 +7,7 @@ import { useRouter } from "expo-router";
 import ProjectLink from "../../components/projectLink";
 import Toast from "react-native-root-toast";
 import { toastConfig } from "../../common/util";
+import env from "../../common/env";
 
 export default function HomePage() {
     const router = useRouter();
@@ -18,7 +19,7 @@ export default function HomePage() {
             if (!token)
                 router.replace('/login');
 
-            fetch('http://192.168.18.55:8000/api/me/', {
+            fetch(`${env.API_URL}me/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -33,7 +34,7 @@ export default function HomePage() {
                 console.log(error.message);
             });
 
-            fetch('http://192.168.18.55:8000/api/projects/', {
+            fetch(`${env.API_URL}projects/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

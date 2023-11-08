@@ -7,10 +7,12 @@ import Toast from "react-native-root-toast";
 import { toastConfig } from "../../../../common/util";
 import EntityCard from "../../../../components/entityCard";
 import * as SecureStore from 'expo-secure-store';
+import env from '../../../../common/env';
 
 export default function HomePage() {
     const [project, setProject] = React.useState<any | null>(null);
     const [activity, setActivity] = React.useState<any | null>(null);
+    const [reload, setReload] = React.useState<boolean>(false);
 
     const params = useLocalSearchParams();
     const router = useRouter();
@@ -20,7 +22,7 @@ export default function HomePage() {
             if (!token)
                 router.replace('/login');
 
-            fetch(`http://192.168.18.55:8000/api/project/${params.id}/`, {
+            fetch(`${env.API_URL}project/${params.id}/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -37,10 +39,10 @@ export default function HomePage() {
                 Toast.show("Server Error: Please try again later!", toastConfig);
             });
         });
-    }, []);
+    }, [reload]);
 
     useEffect(() => {
-        fetch(`http://192.168.18.55:8000/api/project/${params.id}/entries/`, {
+        fetch(`${env.API_URL}project/${params.id}/entries/`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -50,7 +52,7 @@ export default function HomePage() {
             if (response.status === 200) {
                 console.log(json)
                 setActivity(json.map((activity: any) => {
-                    return (<EntityCard key={activity.id} entry={activity} />)
+                    return (<EntityCard key={activity.id} entry={activity} onDelete={() => setReload(!reload)} />)
                 }));
             }
         }).catch((error) => {
